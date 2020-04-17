@@ -1,11 +1,6 @@
 let pixelSize = 30;
 
 class SShape{
-    x;
-    y;
-    color;
-    internalGrid = {};
-
     constructor(x,y,color){
         this.x = x;
         this.y = y;
@@ -20,11 +15,6 @@ class SShape{
 }
 
 class ZShape{
-    x;
-    y;
-    color;
-    internalGrid = {};
-
     constructor(x,y,color){
         this.x = x;
         this.y = y;
@@ -39,11 +29,6 @@ class ZShape{
 }
 
 class TShape{
-    x;
-    y;
-    color;
-    internalGrid = {};
-
     constructor(x,y,color) {
         this.x = x;
         this.y = y;
@@ -58,11 +43,6 @@ class TShape{
 }
 
 class JShape{
-    x;
-    y;
-    color;
-    internalGrid = {};
-
     constructor(x,y,color) {
         this.x = x;
         this.y = y;
@@ -77,11 +57,6 @@ class JShape{
 }
 
 class LShape{
-    x;
-    y;
-    color;
-    internalGrid = {};
-
     constructor(x,y,color){
         this.x = x;
         this.y = y;
@@ -97,11 +72,6 @@ class LShape{
 }
 
 class Square{
-    x;
-    y;
-    color;
-    internalGrid = {};
-
     constructor(x,y,color) {
         this.x = x;
         this.y = y;
@@ -116,11 +86,6 @@ class Square{
 }
 
 class LongRectangle{
-
-    x;
-    y;
-    color;
-    internalGrid = {};
 
     constructor(x,y,color){
         this.x = x;
