@@ -559,11 +559,11 @@ async function doDraw(ctx, canvas) {
         ctx.fillStyle = 'black';
         // Draw our next shape
         if (nextShape){
-            let offsetX = 250 + ((canvas.width()-300)/2);
+            let offsetX = 250 + ((300)/2);
             let offsetY = 50;
             ctx.font = '48px serif';
             ctx.fillText("Next",offsetX, offsetY);
-            ctx.fillText("Score: " + score, offsetX-50, 400);
+            ctx.fillText("Score: " + score, offsetX-50, 550);
             offsetY = 100;
             drawOnCanvas(ctx,nextShape,offsetX,offsetY);
             offsetY = 300;
@@ -573,6 +573,12 @@ async function doDraw(ctx, canvas) {
                 drawOnCanvas(ctx,stored,offsetX,offsetY);
             }
         }
+        ctx.font = '38px serif';
+        ctx.fillText("Instructions",600, 50);
+        ctx.font = '18px serif';
+        ctx.fillText("Arrow keys to move around",600, 80);
+        ctx.fillText("Space to force drop",600, 100);
+        ctx.fillText("'s' key to swap between stored shapes",600, 120);
         ctx.fillStyle = 'black';
         keyboard = {};
         await sleep(10);
