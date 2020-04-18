@@ -142,15 +142,15 @@ function kickBack(shape, newInternalGrid, grid){
             let offsetX = shape.x + x;
             let offsetY = shape.y+y;
             if (offsetX < 0){
-                shape.x += 1;
+                shape.x += -1*offsetX;
                 return true;
             }
-            if (offsetX >= gridWidth){
-                shape.x -= 1;
+            if (offsetX+1 >= gridWidth){
+                shape.x -= Math.abs((offsetX-gridWidth)) + 1;
                 return true;
             }
-            if (offsetY >= gridHeight){
-                shape.y -= 1;
+            if (offsetY+1 >= gridHeight){
+                shape.y -= (gridHeight - offsetY + 1);
                 return true;
             }
             if ( getGridVal(grid, offsetX, offsetY) &&
@@ -369,6 +369,7 @@ async function doDraw(ctx, canvas) {
         }
 
         let shouldMoveActiveDown = (cntr >= 1000);
+        let didSwapStored = false;
         if (cntr >= 1000) cntr = 0;
         if (activeShape) {
             // handle keyboard
@@ -417,24 +418,56 @@ async function doDraw(ctx, canvas) {
                 activeShape = false;
             }
             else if (keyboard[83]) { // stored
+                let activeTemp = copyShape(activeShape);
+                let newActive = false;
+                let hadStored = true;
                 if (stored){
-                    let activeTemp = copyShape(activeShape);
-                    stored.x = activeShape.x;
-                    stored.y = activeShape.y;
+                    newActive = stored;
+                }
+                else {
+                    hadStored = false;
+                    newActive = nextShape;
+                }
 
-                    activeShape = stored;
+                // Can we do it?
+                let initialInternalGrid = copyInternalGrid(activeShape);
+                let newInternalGrid = newActive.internalGrid;
+                let applyIt = true;
+                if (!kickBack(activeShape, newInternalGrid, grid)){
+                    activeShape.internalGrid = newInternalGrid;
+                    if (canMoveUp(activeShape,grid)){
+                        activeShape.y -= 1;
+                    }
+                    else if (canMoveRight(activeShape,grid)){
+                        activeShape.x += 1;
+                    }
+                    else if (canMoveDown(activeShape,grid)){
+                        activeShape.y += 1;
+                    }
+                    else if (canMoveRight(activeShape,grid)){
+                        activeShape.x -= 1;
+                    }
+                    else{
+                        applyIt = false;
+                    }
+                }
+
+                if (applyIt) {
+                    didSwapStored = true;
                     stored = activeTemp;
+                    if (!hadStored) {
+                        nextShape = getRandomShape(gridWidth / 2, 0);
+                    }
+                    activeShape = newActive;
                 }
                 else{
-                    stored = activeShape;
-                    activeShape = nextShape;
-                    nextShape = getRandomShape(gridWidth/2,0);
+                    activeShape.internalGrid = initialInternalGrid;
                 }
             }
         }
 
         if (activeShape){
-            if (shouldMoveActiveDown) {
+            if (shouldMoveActiveDown && !didSwapStored) {
                 if (!canMoveDown(activeShape,grid)){
                     //console.log("Canot move down setting!" + `${activeShape.x},${activeShape.y}`)
                     shapes.push(activeShape);
