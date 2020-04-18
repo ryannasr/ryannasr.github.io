@@ -145,12 +145,12 @@ function kickBack(shape, newInternalGrid, grid){
                 shape.x += -1*offsetX;
                 return true;
             }
-            if (offsetX+1 >= gridWidth){
-                shape.x -= Math.abs((offsetX-gridWidth)) + 1;
+            if (offsetX+1 > gridWidth){
+                shape.x -= x;
                 return true;
             }
-            if (offsetY+1 >= gridHeight){
-                shape.y -= (gridHeight - offsetY + 1);
+            if (offsetY+1 > gridHeight){
+                shape.y -= y;
                 return true;
             }
             if ( getGridVal(grid, offsetX, offsetY) &&
