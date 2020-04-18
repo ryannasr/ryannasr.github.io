@@ -194,7 +194,7 @@ function getGridVal(grid,x,y){
 
 function getRandomShape(x,y){
     let rand = Math.floor(Math.random() * Math.floor(7));
-    let colors = ['aqua','blue','orange','yellow','green','purple','red'];
+    let colors = ['aqua','blue','orange','gray','green','purple','red'];
     let randCol = Math.floor(Math.random() * Math.floor(colors.length));
     let color = colors[randCol];
     switch (rand){
@@ -222,14 +222,13 @@ let grid = {};
 let snap = {};
 let gridHeight = 0;
 let gridWidth = 0;
-$(document).ready(() =>  {
 
+function initTetris(){
     let CANVAS = $("#mycanvas");
     $("#canvasDiv").keydown(canvasKeyUp);
     $("#canvasDiv").focus();
     CANVAS.mousemove(canvasMouseMove);
     let CTX = CANVAS.get(0).getContext("2d");
-    CTX.strokeStyle = 'rgba(0,0,0,0.1)';
     gridHeight = CANVAS.height() / pixelSize;
     gridWidth = CANVAS.width() / pixelSize;
     gridWidth = 300/pixelSize;
@@ -237,6 +236,13 @@ $(document).ready(() =>  {
     clearGrid();
 
     doDraw(CTX, CANVAS);
+}
+
+$(document).ready(() =>  {
+
+    $("#btnTetris").click(function(){
+      initTetris();
+    })
 })
 
 function clearGrid(){
@@ -349,6 +355,7 @@ async function doDraw(ctx, canvas) {
     let it = 0;
     let cntr = 0;
     while (!stopGameLoop) {
+        ctx.fillStyle = 'white'
         it++;
         let t2 = performance.now();
         let deltaMS = t2 - t1;
@@ -453,36 +460,6 @@ async function doDraw(ctx, canvas) {
         }
         shapes = [];
 
-        if (activeShape) {
-            projectionShape = new LongRectangle(0, 0, activeShape.color);
-            projectionShape.x = activeShape.x;
-            projectionShape.y = activeShape.y;
-            projectionShape.internalGrid = activeShape.internalGrid;
-            while (canMoveDown(projectionShape, grid)) {
-                projectionShape.y += 1;
-            }
-        }
-
-        if (activeShape) {
-            drawShape(grid, activeShape);
-        }
-        for (i = 0; i < gridWidth; i++){
-            for (k = 0; k < gridHeight; k++){
-                let x = i * pixelSize;
-                let y = k * pixelSize;
-                ctx.fillRect(x,y,pixelSize, pixelSize);
-                if (!getGridVal(grid,i,k)){
-                    ctx.clearRect(x+1, y+1, pixelSize * 0.9, pixelSize * 0.9);
-                }
-                else{
-                    let offset = 1;
-                    ctx.fillStyle = getGridVal(grid,i,k);
-                    ctx.fillRect(x+offset, y+offset, pixelSize * 0.8, pixelSize * 0.8);
-                }
-                ctx.fillStyle = 'black';
-
-            }
-        }
         // Check for wins
         for (i = gridHeight-1; i >= 0; i--){
             let winRow = true;
@@ -508,49 +485,96 @@ async function doDraw(ctx, canvas) {
             }
         }
 
-        // We have to remove the projection shape
+        if (activeShape) {
+            projectionShape = new LongRectangle(0, 0, activeShape.color);
+            projectionShape.x = activeShape.x;
+            projectionShape.y = activeShape.y;
+            projectionShape.internalGrid = activeShape.internalGrid;
+            while (canMoveDown(projectionShape, grid)) {
+                projectionShape.y += 1;
+            }
+        }
+
+        if (activeShape) {
+            drawShape(grid, activeShape);
+        }
+        for (i = 0; i < gridWidth; i++){
+            for (k = 0; k < gridHeight; k++){
+                let x = i * pixelSize;
+                let y = k * pixelSize;
+                ctx.fillRect(x,y,pixelSize, pixelSize);
+                if (!getGridVal(grid,i,k)){
+                    let offset = 1;
+                    ctx.clearRect(x+offset, y+offset, pixelSize - 2*offset, pixelSize - 2*offset);
+                }
+                else{
+                    let offset = 1;
+                    ctx.fillStyle = getGridVal(grid,i,k);
+                    ctx.fillRect(x+offset, y+offset, pixelSize - 2*offset, pixelSize - 2*offset);
+                }
+                ctx.fillStyle = 'white';
+
+            }
+        }
+
+        // We draw the projection shape
         if (projectionShape){
             for (let i = 0; i < projectionShape.internalGrid.length; i++){
                 for (let k = 0; k < projectionShape.internalGrid[i].length; k++){
+                    ctx.fillStyle = 'white';
                     if (!projectionShape.internalGrid[i][k]) continue;
                     let x = (projectionShape.x + i) * pixelSize;
                     let y = (projectionShape.y + k) * pixelSize;
                     let offset = 1;
-                    ctx.fillStyle = 'green'
-                    ctx.fillRect(x+offset, y+offset, pixelSize * 0.8, pixelSize * 0.8);
+                    ctx.fillRect(x, y, pixelSize, pixelSize);
+                    ctx.fillStyle = projectionShape.color;
+                    ctx.fillRect(x+offset, y+offset, pixelSize - 2*offset, pixelSize - 2*offset);
+                    offset = 2;
+                    ctx.clearRect(x+offset, y+offset,
+                       pixelSize - 2*offset, pixelSize -2*offset);
                 }
             }
         }
-        ctx.fillStyle = 'black';
+        ctx.fillStyle = 'white';
         // Draw our next shape
         if (nextShape){
             let offsetX = 250 + ((300)/2);
             let offsetY = 50;
             ctx.font = '48px serif';
+            ctx.fillStyle = 'black';
             ctx.fillText("Next",offsetX, offsetY);
             ctx.fillText("Score: " + score, offsetX-50, 550);
             offsetY = 100;
             drawOnCanvas(ctx,nextShape,offsetX,offsetY);
             offsetY = 300;
+            ctx.fillStyle = 'black';
             ctx.fillText("Stored",offsetX, 250);
 
             if (stored){
                 drawOnCanvas(ctx,stored,offsetX,offsetY);
             }
         }
+        ctx.fillStyle = 'black';
         ctx.font = '38px serif';
         ctx.fillText("Instructions",600, 50);
         ctx.font = '18px serif';
         ctx.fillText("Arrow keys to move around",600, 80);
         ctx.fillText("Space to force drop",600, 100);
         ctx.fillText("'s' key to swap between stored shapes",600, 120);
-        ctx.fillStyle = 'black';
+
+        // draw the border
+        ctx.beginPath();
+        ctx.moveTo(gridWidth*pixelSize,0);
+        ctx.lineTo(gridWidth*pixelSize,gridHeight*pixelSize);
+        ctx.stroke();
+        ctx.fillStyle = 'white';
         keyboard = {};
         await sleep(10);
     }
 }
 
 function drawOnCanvas(ctx,nextShape, offsetX, offsetY){
+    ctx.fillStyle = 'white';
     for (let i = 0; i < nextShape.internalGrid.length; i++){
         for (let k = 0; k < nextShape.internalGrid[i].length; k++){
             if (!nextShape.internalGrid[i][k]) continue;
@@ -558,8 +582,8 @@ function drawOnCanvas(ctx,nextShape, offsetX, offsetY){
             let y = (offsetY) + k*pixelSize;
             ctx.fillRect(x, y, pixelSize, pixelSize);
             ctx.fillStyle = nextShape.color;
-            ctx.fillRect(x+1, y+1, pixelSize * 0.8, pixelSize * 0.8);
-            ctx.fillStyle = 'black';
+            ctx.fillRect(x+1, y+1, pixelSize - 2, pixelSize - 2);
+            ctx.fillStyle = 'white';
         }
     }
 }
