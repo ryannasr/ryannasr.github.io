@@ -554,6 +554,26 @@ async function doDraw(ctx, canvas) {
         if (projectionShape){
             for (let i = 0; i < projectionShape.internalGrid.length; i++){
                 for (let k = 0; k < projectionShape.internalGrid[i].length; k++){
+                    let doDraw = true;
+                    // any intersection
+                    if (activeShape) {
+                        let px = projectionShape.x + i;
+                        let py = projectionShape.y + k;
+                        for (let ai = 0; ai < activeShape.internalGrid.length; ai++) {
+                            for (let ak = 0; ak < activeShape.internalGrid[ai].length; ak++) {
+                                if (!activeShape.internalGrid[ai][ak])continue;
+                                let aix = activeShape.x + ai;
+                                let aiy = activeShape.y + ak;
+                                if (aix == px && aiy == py) {
+                                    doDraw = false;
+                                    break;
+                                }
+                            }
+                            if (!doDraw) break;
+                        }
+                    }
+                    if (!doDraw) continue;
+
                     ctx.fillStyle = 'white';
                     if (!projectionShape.internalGrid[i][k]) continue;
                     let x = (projectionShape.x + i) * pixelSize;
