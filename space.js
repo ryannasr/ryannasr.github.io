@@ -6,26 +6,6 @@ $(document).ready(function(){
     })
 });
 
-let Utils = {
-    sleep: function(ms){
-        return new Promise(resolve => setTimeout(resolve, ms));
-    },
-    rand: function(top){
-        return Math.floor(Math.random() * Math.floor(top));
-    },
-    testAABB: function(s1, s2){
-        return (s1.x < (s2.x + s2.width) &&
-                (s1.x + s1.width) > s2.x &&
-                s1.y < (s2.y + s2.height) &&
-                (s1.y + s1.height) > s2.y);
-    },
-    arrowKeyDown: 40,
-    arrowKeyUp: 38,
-    arrowKeyLeft: 37,
-    arrowKeyRight: 39,
-    spaceKey:32
-}
-
 let SpaceGame = {
 
     PlayerShip: class {
@@ -108,47 +88,30 @@ let SpaceGame = {
 
     _internalVar: {
         t1: 0,
-        canvasHeight:0,
-        canvasWidth:0,
-        keyboard: {},
         playerShip: {},
-        playerVel: 20,
+        playerVel: 10,
         enemyVel: 15,
         bullets: [],
         enemies: [],
         aiUpdateCntrMs: 0,
         kbUpdatecntrMs: 0,
-        bulletVel:500
+        bulletVel:500,
+        gameLoop: false,
+        lastFired:0
     },
 
     stopGameLoop: false,
     init: function(){
-        let CANVAS = $("#mycanvas");
-        $("#canvasDiv").keydown((e) => SpaceGame.canvasKeyDown(e));
-        $("#canvasDiv").keyup((e) => SpaceGame.canvasKeyUp(e));
-        $("#canvasDiv").focus();
-
-        let CTX = CANVAS.get(0).getContext("2d");
-        this._internalVar.canvasHeight = CANVAS.height();
-        this._internalVar.canvasWidth = CANVAS.width();
-
-        console.log("Initing grid with: " + this._internalVar.canvasWidth + " x " + this._internalVar.canvasHeight);
-        this.gameLoop(CTX, CANVAS);
+        this._internalVar.gameLoop = new GameLoop((ms) => this.update(ms),
+            () => this.onSetup(), (ctx) => this.draw(ctx),
+            true);
+        this._internalVar.gameLoop.init("mycanvas","canvasDiv");
+        this._internalVar.gameLoop.run();
     },
 
-    canvasKeyUp: function(e){
-      this._internalVar.keyboard[e.which] = false;
-    },
-
-    canvasKeyDown: function(e){
-        this._internalVar.keyboard[e.which] = true;
-    },
-
-    gameLoop: async function (CTX, CANVAS) {
-        let frameCntr = 0;
-        let started = performance.now();
+    onSetup: function(){
         this._internalVar.playerShip =
-            new this.PlayerShip(this._internalVar.canvasWidth/2,this._internalVar.canvasHeight-50);
+            new this.PlayerShip(this._internalVar.gameLoop.canvasWidth/2,this._internalVar.gameLoop.canvasHeight-50);
 
         // add enemies
         this._internalVar.enemies.push(new this.EnemyShip(30, 30));
@@ -159,27 +122,6 @@ let SpaceGame = {
         this._internalVar.enemies.push(new this.EnemyShip(600, 30));
         this._internalVar.enemies.push(new this.EnemyShip(700, 30));
         this._internalVar.enemies.push(new this.EnemyShip(800, 30));
-
-        while (!SpaceGame.stopGameLoop) {
-            let t2 = performance.now();
-            let deltaMS = t2 - this._internalVar.t1;
-            this._internalVar.t1 = t2;
-            let msPassed = t2 - started;
-            if (msPassed > 5000){
-                started = t2;
-                frameCntr = 0;
-            }
-
-            this.clearCanvas(CTX, CANVAS);
-            let fps = frameCntr/(msPassed/1000);
-
-            this.update(deltaMS);
-            this.draw(CTX,fps);
-
-            frameCntr++;
-            //this._internalVar.keyboard = {};
-            await Utils.sleep(10);
-        }
     },
 
     update: function(deltaMs){
@@ -187,12 +129,8 @@ let SpaceGame = {
 
         this._internalVar.playerShip.update();
 
-        // Keyboard runs @ 60ms
-        this._internalVar.kbUpdatecntrMs += deltaMs;
-        if (this._internalVar.kbUpdatecntrMs >= 40) {
-            this.handleKeyboard();
-            this._internalVar.kbUpdatecntrMs = 0;
-        }
+        this.handleKeyboard();
+
         for (let i =0; i < this._internalVar.bullets.length; i++){
             this._internalVar.bullets[i].update(deltaMs);
         }
@@ -209,7 +147,7 @@ let SpaceGame = {
                     this._internalVar.playerShip.damage();
 
                 }
-                if (!playerDmg && b.y < this._internalVar.canvasHeight){
+                if (!playerDmg && b.y < this._internalVar.gameLoop.canvasHeight){
                     newBullets.push(b);
                 }
             }
@@ -277,9 +215,10 @@ let SpaceGame = {
         }
     },
 
-    draw: function(CTX,fps){
+    draw: function(CTX){
         if (this._internalVar.playerShip.dead){
-            CTX.fillText("YOU ARE DEAD!!!", this._internalVar.canvasWidth/2, this._internalVar.canvasHeight/2);
+            CTX.fillText("YOU ARE DEAD!!!", this._internalVar.gameLoop.canvasWidth/2,
+                this._internalVar.gameLoop.canvasHeight/2);
             return;
         }
 
@@ -290,11 +229,14 @@ let SpaceGame = {
             this._internalVar.enemies[i].draw(CTX);
         }
         this._internalVar.playerShip.draw(CTX);
-        this.drawFps(CTX, fps);
-    },
 
-    clearCanvas: function(CTX, CANVAS){
-        CTX.clearRect(0, 0, CANVAS.width(), CANVAS.height());
+        let txt = 'Bullets: ' + this._internalVar.bullets.length;
+        let bulletTxt = CTX.measureText(txt);
+        CTX.fillText(txt,this._internalVar.gameLoop.canvasWidth-bulletTxt.width-5,40);
+
+        txt = 'Damage: ' + this._internalVar.playerShip.dmg;
+        let dmgTxt = CTX.measureText(txt);
+        CTX.fillText(txt,this._internalVar.gameLoop.canvasWidth-dmgTxt.width-5,60);
     },
 
     checkAndMove(obj, dir, checkWith = []){
@@ -302,8 +244,8 @@ let SpaceGame = {
       let canMove = true;
       if (newPos.x < 0) canMove = false;
       if (newPos.y < 0) canMove = false;
-      if (newPos.x + obj.width > this._internalVar.canvasWidth) canMove = false;
-      if (newPos.y + obj.height > this._internalVar.canvasHeight) canMove = false;
+      if (newPos.x + obj.width > this._internalVar.gameLoop.canvasWidth) canMove = false;
+      if (newPos.y + obj.height > this._internalVar.gameLoop.canvasHeight) canMove = false;
       let wallOnly = true;
       newPos.width = obj.width;
       newPos.height = obj.height;
@@ -327,7 +269,7 @@ let SpaceGame = {
           }
           else if (dir.x > 0){
               // was going right, snap to right side
-              obj.x = this._internalVar.canvasWidth - obj.width;
+              obj.x = this._internalVar.gameLoop.canvasWidth - obj.width;
           }
           else if (dir.y < 0){
               // was going up, snap to top
@@ -335,49 +277,41 @@ let SpaceGame = {
           }
           else if (dir.y > 0){
               // going down, snap to bottom
-              obj.y = this._internalVar.canvasHeight - obj.height;
+              obj.y = this._internalVar.gameLoop.canvasHeight - obj.height;
           }
       }
     },
 
     handleKeyboard: function(){
         let vel = this._internalVar.playerVel;
-        if (this._internalVar.keyboard[Utils.arrowKeyDown]){
+        if (this._internalVar.gameLoop.getKeyPressed(Utils.arrowKeyDown)){
             this.checkAndMove(this._internalVar.playerShip, {x:0,y:vel}, this._internalVar.enemies);
         }
-        if (this._internalVar.keyboard[Utils.arrowKeyLeft]){
+        if (this._internalVar.gameLoop.getKeyPressed(Utils.arrowKeyLeft)){
             this.checkAndMove(this._internalVar.playerShip, {x:-vel,y:0}, this._internalVar.enemies);
         }
-        if (this._internalVar.keyboard[Utils.arrowKeyRight]){
+        if (this._internalVar.gameLoop.getKeyPressed(Utils.arrowKeyRight)){
             this.checkAndMove(this._internalVar.playerShip, {x:vel,y:0}, this._internalVar.enemies);
         }
-        if (this._internalVar.keyboard[Utils.arrowKeyUp]){
+        if (this._internalVar.gameLoop.getKeyPressed(Utils.arrowKeyUp)){
             this.checkAndMove(this._internalVar.playerShip, {x:0,y:-vel}, this._internalVar.enemies);
         }
-        if (this._internalVar.keyboard[Utils.spaceKey]){
+        if (this._internalVar.gameLoop.getKeyPressed(Utils.spaceKey)){
+            let fireRatePerS = 1;
+            let allowFire = false;
+            if (!this._internalVar.lastFired) {
+                this._internalVar.lastFired = performance.now();
+                allowFire = true;
+            }
+            else if (performance.now() - this._internalVar.lastFired >= 60) {
+                this._internalVar.lastFired = performance.now();
+                allowFire = true;
+            }
+            if (!allowFire) return;
             console.log("firing");
             this._internalVar.bullets.push(
                 new this.Bullet(this._internalVar.playerShip.x + this._internalVar.playerShip.width/2,
                                 this._internalVar.playerShip.y, this._internalVar.bulletVel));
         }
-    },
-
-    drawFps: function(CTX, fps){
-        fps = Math.floor(fps);
-
-        CTX.font = '18px serif';
-        CTX.fillStyle = 'black';
-
-        let txt = 'FPS: ' + fps;
-        let txtWidth = CTX.measureText(txt);
-        CTX.fillText(txt,this._internalVar.canvasWidth-txtWidth.width-5, 20);
-
-        txt = 'Bullets: ' + this._internalVar.bullets.length;
-        let bulletTxt = CTX.measureText(txt);
-        CTX.fillText(txt,this._internalVar.canvasWidth-bulletTxt.width-5,40);
-
-        txt = 'Damage: ' + this._internalVar.playerShip.dmg;
-        let dmgTxt = CTX.measureText(txt);
-        CTX.fillText(txt,this._internalVar.canvasWidth-dmgTxt.width-5,60);
     }
 }
