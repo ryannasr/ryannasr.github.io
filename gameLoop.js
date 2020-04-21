@@ -22,7 +22,7 @@ let Utils = {
 let GameLoop = class {
 
 
-    constructor(onUserUpdateFunc, onUserStartFunc, onUserDrawFunc, drawFps = true){
+    constructor(onUserUpdateFunc, onUserStartFunc, onUserDrawFunc, drawFps = true, fpsColor = 'black'){
         this._onUserUpdate = onUserUpdateFunc;
         this._onUserStartFunc = onUserStartFunc;
         this._onUserDrawFunc = onUserDrawFunc;
@@ -36,9 +36,10 @@ let GameLoop = class {
         this.t1 = 0;
         this._started = 0;
         this._frameCntr = 0;
+        this._fpsColor = fpsColor;
     };
 
-    init(canvasId, canvasDivId){
+    init(canvasId, canvasDivId, width = 0, height = 0){
         let CANVAS = $("#" + canvasId);
         let canvasDiv = $("#"+canvasDivId);
         canvasDiv.keydown((e) => this.canvasKeyDown(e));
@@ -46,6 +47,12 @@ let GameLoop = class {
         canvasDiv.focus();
 
         let CTX = CANVAS.get(0).getContext("2d");
+
+        if (width && height){
+            CTX.canvas.width = width;
+            CTX.canvas.height = height;
+        }
+
         this.canvasHeight = CANVAS.height();
         this.canvasWidth = CANVAS.width();
 
@@ -96,7 +103,7 @@ let GameLoop = class {
         fps = Math.floor(fps);
 
         CTX.font = '18px serif';
-        CTX.fillStyle = 'black';
+        CTX.fillStyle = this._fpsColor;
 
         let txt = 'FPS: ' + fps;
         let txtWidth = CTX.measureText(txt);
