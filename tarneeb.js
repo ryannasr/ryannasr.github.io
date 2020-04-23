@@ -45,7 +45,7 @@ let Tarneeb = {
         this.gameLoop.init("mycanvas", "canvasDiv");
 
         let loc = (window.location.href.substr(0,12));
-        let signalRHostname = (loc.indexOf('loca') != -1 && false) ? 'https://localhost:5001' :
+        let signalRHostname = (loc.indexOf('loca') != -1) ? 'https://localhost:5001' :
             'https://tarneebdev.azurewebsites.net';
 
         this.conn = await SignalRLib.openHubConnection(signalRHostname, "gameHub");
@@ -229,21 +229,6 @@ let Tarneeb = {
                 ctx.fillText("Tarneeb: " + activeRound.tarneeb, 10, 60);
             }
 
-            // team scores
-            let y = 80;
-            for (let prop in this.activeRoom.game.teams){
-                let ts = this.activeRoom.game.teams[prop];
-                let isBetter = '';
-                if (activeRound && activeRound.teamScores){
-                    let tsRound = activeRound.teamScores[prop];
-                    isBetter = "(" + tsRound.score;
-                    isBetter += tsRound.bet ? " (bet: " + tsRound.bet + ")" : ')';
-                }
-
-                ctx.fillText(prop + ": " + ts.score + isBetter, 10, y);
-                y+= 20;
-            }
-
             ctx.fillText(betTxt, 10, 40);
             let myplayer = null;
             let teammate = null;
@@ -262,12 +247,38 @@ let Tarneeb = {
                 }
             }
 
+            // team scores
+            let y = 80;
+            let prevCtxFill = ctx.fillStyle;
+            for (let prop in this.activeRoom.game.teams){
+                let ts = this.activeRoom.game.teams[prop];
+                let isBetter = '';
+                if (activeRound && activeRound.teamScores){
+                    let tsRound = activeRound.teamScores[prop];
+                    isBetter = "(" + tsRound.score;
+                    isBetter += tsRound.bet ? " (bet: " + tsRound.bet + ")" : ')';
+                }
+                if (myplayer.teamId == ts.id){
+                    ctx.fillStyle = 'green'
+                }
+                ctx.fillText(prop + ": " + ts.score + isBetter, 10, y);
+                ctx.fillStyle = prevCtxFill;
+                y+= 20;
+            }
+
             // he is at the bottom
             let isCurrentPlayer = activeRound.currentSeatPlay == myplayer.seatCount ? ' (*)' : '';
             ctx.fillText("Player '" + myplayer.name + "' (" + myplayer.seatCount + ")" + isCurrentPlayer + " ("+
                 " (" + (!pBet ? 'No bet' : pBet) + ")",
                 this.gameLoop.canvasWidth/2, this.gameLoop.canvasHeight-20);
             let nextSeat = myplayer.seatCount + 1;
+
+            if (activeRound.currentSeatPlay == myplayer.seatCount){
+               document.title = "Tarneeb | My turn"
+            }
+            else{
+                document.title = "Tarneeb"
+            }
 
             // draw my cards
             let btnX = 20;
