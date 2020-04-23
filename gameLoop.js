@@ -37,13 +37,21 @@ let GameLoop = class {
         this._started = 0;
         this._frameCntr = 0;
         this._fpsColor = fpsColor;
+        this.mouseX = 0;
+        this.mouseY = 0;
+        this.buttons = [];
+        this.mouseClicks = [];
+        this.btnsClicked = [];
     };
 
     init(canvasId, canvasDivId, width = 0, height = 0){
+        this.canvasId = canvasId;
         let CANVAS = $("#" + canvasId);
         let canvasDiv = $("#"+canvasDivId);
         canvasDiv.keydown((e) => this.canvasKeyDown(e));
         canvasDiv.keyup((e) => this.canvasKeyUp(e));
+        canvasDiv.mousemove((e) => this.canvasMouseMove(e));
+        canvasDiv.mouseup((e) => this.canvasMouseClick(e));
         canvasDiv.focus();
 
         let CTX = CANVAS.get(0).getContext("2d");
@@ -85,9 +93,11 @@ let GameLoop = class {
         this.clearCanvas(CTX, CANVAS);
         let fps = this._frameCntr / (msPassed / 1000);
 
+        this._internalUpdate(deltaMS);
         if (this._onUserStartFunc) {
             this._onUserUpdate(deltaMS);
         }
+        this._internalDraw(CTX);
         if (this._onUserDrawFunc) {
             this._onUserDrawFunc(CTX);
         }
@@ -95,9 +105,50 @@ let GameLoop = class {
             this.drawFps(CTX, fps);
         }
 
+        this.mouseClicks = [];
+        this.btnsClicked = [];
         this._frameCntr++;
         window.requestAnimationFrame((time) => this.gameLoop(CTX, CANVAS));
     };
+
+    _internalUpdate(deltaMS){
+        // little box for the mouse
+        let setPointer = false;
+        let btnClicked = null;
+        let mouse = {x:this.mouseX, y:this.mouseY, width:1,height:1};
+        for (let i = 0; i < this.buttons.length; i++){
+            let b = this.buttons[i];
+            if (Utils.testAABB(mouse, b)){
+                setPointer = true;
+                break;
+            }
+        }
+        if (setPointer){
+            $("#" + this.canvasId).css('cursor','pointer')
+        }
+        else{
+            $("#" + this.canvasId).css('cursor','auto')
+        }
+
+        // Check for mouse clicks
+        for (let i = 0; i < this.mouseClicks.length; i++) {
+            let mc = this.mouseClicks[i];
+            mouse = {x: mc.x, y: mc.y, width: 1, height: 1};
+            for (let k = 0; k < this.buttons.length; k++) {
+                let b = this.buttons[k];
+                if (Utils.testAABB(mouse, b)) {
+                    this.btnsClicked.push(b);
+                }
+            }
+        }
+    };
+
+    _internalDraw(CTX){
+        for (let i = 0; i < this.buttons.length; i++){
+            let b = this.buttons[i];
+            this.drawButton(CTX, b);
+        }
+    }
 
     drawFps(CTX, fps){
         fps = Math.floor(fps);
@@ -110,8 +161,84 @@ let GameLoop = class {
         CTX.fillText(txt,this.canvasWidth-txtWidth.width-5, 20);
     };
 
+    drawButton(CTX, btn){
+        let prevFill = CTX.fillStyle;
+        let txtWidth = CTX.measureText(btn.txt);
+
+        let height = this.getTextHeight(btn.font).height;
+        let btnPadding = 5;
+
+        CTX.fillStyle = btn.bg;
+        CTX.fillRect(btn.x,btn.y,txtWidth.width + 2*btnPadding, height + 2*btnPadding);
+        CTX.fillStyle = btn.fg;
+        CTX.font = btn.font;
+        CTX.fillText(btn.txt,btn.x+btnPadding,btn.y + height);
+        CTX.fillStyle = prevFill;
+
+        btn.width = txtWidth.width;
+        btn.height = height + 2*btnPadding;
+    };
+
+    addButtonToScene(ctx, id, x, y, txt, tag = null, font = '12pt Times', bg = 'lightgray', fg = 'black'){
+        let height = this.getTextHeight(font).height;
+        let txtWidth = ctx.measureText(txt);
+        let btn = {
+            id: id,
+            x: x,
+            y: y,
+            txt: txt,
+            font: font,
+            bg: bg,
+            fg: fg,
+            width: txtWidth.width,
+            height: height + 10,
+            tag: tag
+        };
+        this.buttons.push(btn);
+        return btn;
+    }
+
+    getTextHeight(font) {
+
+        return {height: 18};
+        var text = $('<span>Hg</span>').css({ fontFamily: font });
+        var block = $('<div style="display: inline-block; width: 1px; height: 0px;"></div>');
+
+        var div = $('<div></div>');
+        div.append(text, block);
+
+        var body = $('body');
+        body.append(div);
+
+        try {
+
+            var result = {};
+
+            block.css({ verticalAlign: 'baseline' });
+            result.ascent = block.offset().top - text.offset().top;
+
+            block.css({ verticalAlign: 'bottom' });
+            result.height = block.offset().top - text.offset().top;
+
+            result.descent = result.height - result.ascent;
+
+        } finally {
+            div.remove();
+        }
+        return result;
+    };
+
     clearCanvas(CTX, CANVAS){
         CTX.clearRect(0, 0, CANVAS.width(), CANVAS.height());
+    };
+
+    canvasMouseClick(e){
+        this.mouseClicks.push({x:e.offsetX, y:e.offsetY});
+    }
+
+    canvasMouseMove(e){
+        this.mouseX = e.offsetX;
+        this.mouseY = e.offsetY;
     };
 
     canvasKeyUp(e){
