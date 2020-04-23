@@ -172,6 +172,29 @@ let Tarneeb = {
         }
     },
 
+    getCardImgData: function(card){
+        //950x392
+        let hSpace = 392/4;
+        let wSpace = 950/13;
+        let sx = 0;
+        let sy = 0;
+        if (card.suit == 'Clubs'){
+          sy = 0;
+        }
+        else if (card.suit == 'Spades'){
+            sy = hSpace;
+        }
+        else if (card.suit == 'Hearts'){
+            sy = hSpace*2;
+        }
+        else if (card.suit == 'Diamonds'){
+            sy = hSpace*3;
+        }
+        let multiplier = card.rankE + 1;
+        if (card.rank == 'Ace') multiplier = 0;
+        sx = wSpace * multiplier;
+        return {sx: sx, sy:sy, w: 40, h: 40};
+    },
     draw:function(ctx){
         if (this.uiState == 'main'){
             this.gameLoop.buttons = [];
@@ -249,9 +272,12 @@ let Tarneeb = {
                 let cardTxt = '';
                 for (let i = 0; i < this.mycards.length; i++){
                     let c = this.mycards[i];
+                    let imgData = this.getCardImgData(c);
                     let btnTxt = c.suit[0] + '.' + c.rank;
+                    btnTxt = '';
                     let btn = this.gameLoop.addButtonToScene(ctx, "PickCard", btnX,
-                        btnY,btnTxt, c);
+                        btnY,btnTxt, c, '12pt Times', 'lightgray', 'black',
+                        'cards.png', imgData.sx, imgData.sy, imgData.w, imgData.h);
                     btnX = btn.x + btn.width + 20;
                 }
             }
@@ -261,17 +287,28 @@ let Tarneeb = {
             if (subround){
                 let tablecards = subround.tableCards;
                 let y= (this.gameLoop.canvasHeight/2)-30;
+                let btnX = (this.gameLoop.canvasWidth/2)-100;
                 for (let i = 0; i < tablecards.length; i++){
-                    let c = tablecards[i];
-                    ctx.fillText(c.card.rank + " of " + c.card.suit, (this.gameLoop.canvasWidth/2)-30,y);
-                    y += 30;
+                    let c = tablecards[i].card;
+                    let imgData = this.getCardImgData(c);
+                    let btn = this.gameLoop.addButtonToScene(ctx, "TableCards", btnX,
+                        y,'', c, '12pt Times', 'lightgray', 'black',
+                        'cards.png', imgData.sx, imgData.sy, imgData.w, imgData.h);
+                    btnX = btn.x + btn.width + 20;
                 }
             }
 
             if (activeRound.statusStr == 'Betting' && isCurrentPlayer){
                 // Show bets
-                let btn = this.gameLoop.addButtonToScene(ctx, "Bet", (this.gameLoop.canvasWidth/2),
-                    this.gameLoop.canvasHeight-60,"Bet 7", 7);
+                let betStart = activeRound.highestBet.Value ? activeRound.highestBet.Value+1 : 7;
+                let btn = null;
+                let btnXStart = (this.gameLoop.canvasWidth/2);
+                let btnYStart = this.gameLoop.canvasHeight-60;
+                for (let i = betStart; i <= 13; i++){
+                    btnXStart = (btn) ? btn.x + btn.width + 20 : btnXStart;
+                    btn = this.gameLoop.addButtonToScene(ctx, "Bet", btnXStart,
+                        btnYStart,"Bet " + i, i);
+                }
                 this.gameLoop.addButtonToScene(ctx, "Bet", btn.x + btn.width + 20,
                     this.gameLoop.canvasHeight-60,"Pass", 0);
             }

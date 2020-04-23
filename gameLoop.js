@@ -42,6 +42,7 @@ let GameLoop = class {
         this.buttons = [];
         this.mouseClicks = [];
         this.btnsClicked = [];
+        this.imgs = {};
     };
 
     init(canvasId, canvasDivId, width = 0, height = 0){
@@ -160,7 +161,6 @@ let GameLoop = class {
         let txtWidth = CTX.measureText(txt);
         CTX.fillText(txt,this.canvasWidth-txtWidth.width-5, 20);
     };
-
     drawButton(CTX, btn){
         let prevFill = CTX.fillStyle;
         let txtWidth = CTX.measureText(btn.txt);
@@ -168,20 +168,39 @@ let GameLoop = class {
         let height = this.getTextHeight(btn.font).height;
         let btnPadding = 5;
 
+        if (btn.img) {
+            const image = new Image(60, 45); // Using optional size for image
+            image.src = btn.img;
+            image.onload = () => {
+                this.imgs[image.src+""] = image;
+            };
+            if (this.imgs[image.src]) {
+                CTX.drawImage(this.imgs[image.src], btn.imgSX, btn.imgSY, btn.imgSW, btn.imgSH,
+                    btn.x, btn.y, btn.imgSW, btn.imgSH);
+            } else {
+                CTX.drawImage(image, btn.x, btn.y, btn.width, btn.height);
+            }
+            CTX.globalAlpha = 0.2;
+        }
+
         CTX.fillStyle = btn.bg;
         CTX.fillRect(btn.x,btn.y,txtWidth.width + 2*btnPadding, height + 2*btnPadding);
         CTX.fillStyle = btn.fg;
         CTX.font = btn.font;
         CTX.fillText(btn.txt,btn.x+btnPadding,btn.y + height);
         CTX.fillStyle = prevFill;
-
-        btn.width = txtWidth.width;
-        btn.height = height + 2*btnPadding;
+        CTX.globalAlpha = 1.0;
     };
 
-    addButtonToScene(ctx, id, x, y, txt, tag = null, font = '12pt Times', bg = 'lightgray', fg = 'black'){
-        let height = this.getTextHeight(font).height;
-        let txtWidth = ctx.measureText(txt);
+    addButtonToScene(ctx, id, x, y, txt, tag = null, font = '12pt Times', bg = 'lightgray',
+                     fg = 'black', img=null, imgSX = 0, imgSY = 0, imgSW = 0, imgSH = 0){
+        let btnPadding = 5;
+        let height = this.getTextHeight(font).height+ 2*btnPadding;
+        let txtWidth = ctx.measureText(txt).width+ 2*btnPadding;
+        if (!txt){
+            height = imgSH;
+            txtWidth = imgSW;
+        }
         let btn = {
             id: id,
             x: x,
@@ -190,9 +209,14 @@ let GameLoop = class {
             font: font,
             bg: bg,
             fg: fg,
-            width: txtWidth.width,
+            width: txtWidth,
             height: height + 10,
-            tag: tag
+            tag: tag,
+            img: img,
+            imgSX: imgSX,
+            imgSY: imgSY,
+            imgSW: imgSW,
+            imgSH: imgSH
         };
         this.buttons.push(btn);
         return btn;
