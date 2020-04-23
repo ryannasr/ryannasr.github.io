@@ -74,9 +74,22 @@ let Tarneeb = {
     },
 
     onRoomStateChanged:function(room){
-      console.log("Room state changed to: " + room.state);
-      console.log(room);
-      this.activeRoom = room;
+        console.log("Room state changed to: " + room.state);
+        console.log(room);
+        /*
+        if (this.activeRoom && this.activeRoom.game) {
+            let currentActiveRound = this.activeRoom.game.activeRound;
+            if (currentActiveRound) {
+                let subround = room.activeRound.activeSubRound;
+                if (subround) {
+                    let tablecards = subround.tableCards;
+                    if (tablecards){
+
+                    }
+                }
+            }
+        }*/
+        this.activeRoom = room;
     },
 
     onPlayerDisconnected:function(room){
@@ -133,7 +146,9 @@ let Tarneeb = {
             }
         }
         else if (this.uiState == 'inGame'){
-
+            if (this.activeRoom.state != 'InGame'){
+                this.uiState = 'roomLobby';
+            }
         }
 
         for (let i = 0; i < this.gameLoop.btnsClicked.length; i++) {
@@ -172,6 +187,14 @@ let Tarneeb = {
             else if (b.id == 'PickCard'){
                 console.log("Picked card: " + b.tag.suit + ' of ' + b.tag.rank);
                 await this.conn.invoke("PlayCard", this.token, this.activeRoom.id, this.myid, b.tag.rankE, b.tag.suitE);
+            }
+            else if (b.id == 'BtnAddAI'){
+                console.log("Adding AI to room: " + b.tag);
+                await this.conn.invoke("AddAIToRoom", this.token, b.tag);
+            }
+            else if (b.id == 'ResetRoom'){
+                console.log("Resetting room: " + b.tag);
+                await this.conn.invoke("ResetRoom", this.token, b.tag);
             }
         }
     },
@@ -265,6 +288,8 @@ let Tarneeb = {
                 ctx.fillStyle = prevCtxFill;
                 y+= 20;
             }
+            // y= 120
+            this.gameLoop.addButtonToScene(ctx, 'ResetRoom',10, 120, 'Reset', this.activeRoom.id);
 
             // he is at the bottom
             let isCurrentPlayer = activeRound.currentSeatPlay == myplayer.seatCount ? ' (*)' : '';
@@ -412,6 +437,8 @@ let Tarneeb = {
 
                 y+=20;
             }
+
+            this.gameLoop.addButtonToScene(ctx, "BtnAddAI", 30, y +20, 'Add AI', this.activeRoom.id);
 
             if (this.uiState == 'roomLobbyCountdown'){
                 ctx.fillText("Game will start in " + this.lobbyRdyCountdown +
