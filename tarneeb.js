@@ -44,7 +44,11 @@ let Tarneeb = {
             true);
         this.gameLoop.init("mycanvas", "canvasDiv");
 
-        this.conn = await SignalRLib.openHubConnection("https://localhost:5001", "gameHub");
+        let loc = (window.location.href.substr(0,12));
+        let signalRHostname = (loc.indexOf('loca') != -1 && false) ? 'https://localhost:5001' :
+            'https://tarneebdev.azurewebsites.net';
+
+        this.conn = await SignalRLib.openHubConnection(signalRHostname, "gameHub");
         let resp = await this.conn.invoke("Authenticate", name);
         this.token = resp.token;
         this.myid = resp.id;
