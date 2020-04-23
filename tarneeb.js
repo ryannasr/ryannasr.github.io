@@ -76,19 +76,6 @@ let Tarneeb = {
     onRoomStateChanged:function(room){
         console.log("Room state changed to: " + room.state);
         console.log(room);
-        /*
-        if (this.activeRoom && this.activeRoom.game) {
-            let currentActiveRound = this.activeRoom.game.activeRound;
-            if (currentActiveRound) {
-                let subround = room.activeRound.activeSubRound;
-                if (subround) {
-                    let tablecards = subround.tableCards;
-                    if (tablecards){
-
-                    }
-                }
-            }
-        }*/
         this.activeRoom = room;
     },
 
@@ -235,7 +222,7 @@ let Tarneeb = {
                 let txtSize = ctx.measureText(txt);
                 ctx.fillText(txt, startingX, startingY);
                 this.gameLoop.addButtonToScene(ctx, "BtnJoin",
-                    txtSize.width + startingX + 5, startingY, "Join", this.rooms[i].id);
+                    txtSize.width + startingX + 5, startingY - 20, "Join", this.rooms[i].id);
             }
             startingY += 100;
             this.gameLoop.addButtonToScene(ctx, 'BtnCreateRoom',this.gameLoop.canvasWidth/2 - 100, 30,"Create Room");
@@ -307,7 +294,7 @@ let Tarneeb = {
 
             // draw my cards
             let btnX = 20;
-            let btnY = this.gameLoop.canvasHeight-100;
+            let btnY = this.gameLoop.canvasHeight-120;
             if (this.mycards){
                 let cardTxt = '';
                 for (let i = 0; i < this.mycards.length; i++){
@@ -342,15 +329,15 @@ let Tarneeb = {
                 // Show bets
                 let betStart = activeRound.highestBet.Value ? activeRound.highestBet.Value+1 : 7;
                 let btn = null;
-                let btnXStart = (this.gameLoop.canvasWidth/2);
-                let btnYStart = this.gameLoop.canvasHeight-60;
+                let btnXStart = (this.gameLoop.canvasWidth/2)-90;
+                let btnYStart = this.gameLoop.canvasHeight-70;
                 for (let i = betStart; i <= 13; i++){
                     btnXStart = (btn) ? btn.x + btn.width + 20 : btnXStart;
                     btn = this.gameLoop.addButtonToScene(ctx, "Bet", btnXStart,
                         btnYStart,"Bet " + i, i);
                 }
                 this.gameLoop.addButtonToScene(ctx, "Bet", btn.x + btn.width + 20,
-                    this.gameLoop.canvasHeight-60,"Pass", 0);
+                    this.gameLoop.canvasHeight-70,"Pass", 0);
             }
             if (activeRound.statusStr == 'PickTarneeb' && isCurrentPlayer){
                 let btn = this.gameLoop.addButtonToScene(ctx, "PickTarneeb", (this.gameLoop.canvasWidth/2),

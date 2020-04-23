@@ -116,7 +116,7 @@ let GameLoop = class {
         // little box for the mouse
         let setPointer = false;
         let btnClicked = null;
-        let mouse = {x:this.mouseX, y:this.mouseY, width:1,height:1};
+        let mouse = {x:this.mouseX, y:this.mouseY, width:0.00,height:0.00};
         for (let i = 0; i < this.buttons.length; i++){
             let b = this.buttons[i];
             if (Utils.testAABB(mouse, b)){
@@ -134,7 +134,7 @@ let GameLoop = class {
         // Check for mouse clicks
         for (let i = 0; i < this.mouseClicks.length; i++) {
             let mc = this.mouseClicks[i];
-            mouse = {x: mc.x, y: mc.y, width: 1, height: 1};
+            mouse = {x: mc.x, y: mc.y, width: 0.1, height: 0.1};
             for (let k = 0; k < this.buttons.length; k++) {
                 let b = this.buttons[k];
                 if (Utils.testAABB(mouse, b)) {
@@ -195,7 +195,8 @@ let GameLoop = class {
     addButtonToScene(ctx, id, x, y, txt, tag = null, font = '12pt Times', bg = 'lightgray',
                      fg = 'black', img=null, imgSX = 0, imgSY = 0, imgSW = 0, imgSH = 0){
         let btnPadding = 5;
-        let height = this.getTextHeight(font).height+ 2*btnPadding;
+        let height = this.getTextHeight(font).height;
+        ctx.font = font;
         let txtWidth = ctx.measureText(txt).width+ 2*btnPadding;
         if (!txt){
             height = imgSH;
