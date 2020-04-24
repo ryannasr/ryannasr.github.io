@@ -186,7 +186,7 @@ let Tarneeb = {
         }
     },
 
-    getCardImgData: function(card){
+    getCardImgData: function(card, fullSize = false){
         //950x392
         let hSpace = 392/4;
         let wSpace = 950/13;
@@ -207,7 +207,9 @@ let Tarneeb = {
         let multiplier = card.rankE + 1;
         if (card.rank == 'Ace') multiplier = 0;
         sx = wSpace * multiplier;
-        return {sx: sx, sy:sy, w: 40, h: 40};
+        let cw = fullSize ? wSpace : 40;
+        let ch = fullSize ? hSpace : 40;
+        return {sx: sx, sy:sy, w: cw, h: ch};
     },
     draw:function(ctx){
         if (this.uiState == 'main'){
@@ -277,12 +279,19 @@ let Tarneeb = {
             }
             // y= 120
             this.gameLoop.addButtonToScene(ctx, 'ResetRoom',10, 120, 'Reset', this.activeRoom.id);
+            let prevFill = ctx.fillStyle;
 
             // he is at the bottom
             let isCurrentPlayer = activeRound.currentSeatPlay == myplayer.seatCount ? ' (*)' : '';
+            if (isCurrentPlayer){
+                ctx.fillStyle = 'red';
+            }
             ctx.fillText("Player '" + myplayer.name + "' (" + myplayer.seatCount + ")" + isCurrentPlayer + " ("+
                 " (" + (!pBet ? 'No bet' : pBet) + ")",
                 this.gameLoop.canvasWidth/2, this.gameLoop.canvasHeight-20);
+            if (isCurrentPlayer){
+                ctx.fillStyle = prevFill;
+            }
             let nextSeat = myplayer.seatCount + 1;
 
             if (activeRound.currentSeatPlay == myplayer.seatCount){
@@ -317,11 +326,73 @@ let Tarneeb = {
                 let btnX = (this.gameLoop.canvasWidth/2)-100;
                 for (let i = 0; i < tablecards.length; i++){
                     let c = tablecards[i].card;
-                    let imgData = this.getCardImgData(c);
+                    let imgData = this.getCardImgData(c, true);
+                    let plyrId = tablecards[i].playerId;
+                    let plyr = this.activeRoom.players.find(q => q.id == plyrId);
+                    if (plyr.seatCount == myplayer.seatCount)
+                    {
+                        // my card right in front of me
+                        btnX = (this.gameLoop.canvasWidth/2);
+                        y = (this.gameLoop.canvasHeight)-280;
+                    }
+                    else{
+                        let btnLeft = {x:130, y:((this.gameLoop.canvasHeight)/2) - 80};
+                        let btnRight = {x:(this.gameLoop.canvasWidth)-160, y:((this.gameLoop.canvasHeight)/2) - 80};
+                        let btnFront = {x:(this.gameLoop.canvasWidth/2), y:110};
+                        let seatDiff = plyr.seatCount - myplayer.seatCount;
+                        if (myplayer.seatCount == 3){
+                            if (plyr.seatCount == 0){
+                                // on my left
+                                btnX = btnLeft.x;
+                                y = btnLeft.y
+                            }
+                            else if (plyr.seatCount == 1){
+                                // infront
+                                btnX = btnFront.x;
+                                y = btnFront.y;
+                            }
+                            else {
+                                // on my right
+                                btnX = btnRight.x;
+                                y = btnRight.y;
+                            }
+                        }
+                        else if (myplayer.seatCount == 0){
+                            if (plyr.seatCount == 1){
+                                // on my left
+                                btnX = btnLeft.x;
+                                y = btnLeft.y;
+                            }
+                            else if (plyr.seatCount == 2){
+                                // infront
+                                btnX = btnFront.x;
+                                y = btnFront.y;
+                            }
+                            else {
+                                // on my right
+                                btnX = btnRight.x;
+                                y = btnRight.y;
+                            }
+                        }
+                        else {
+                            if (seatDiff == 1) {
+                                // he on my left
+                                btnX = btnLeft.x;
+                                y = btnLeft.y;
+                            } else if (seatDiff == -1) {
+                                // he on my right
+                                btnX = btnRight.x;
+                                y = btnRight.y;
+                            } else if (seatDiff == 2 || seatDiff == -2) {
+                                // he infront of me
+                                btnX = btnFront.x;
+                                y = btnFront.y;
+                            }
+                        }
+                    }
                     let btn = this.gameLoop.addButtonToScene(ctx, "TableCards", btnX,
                         y,'', c, '12pt Times', 'lightgray', 'black',
                         'cards.png', imgData.sx, imgData.sy, imgData.w, imgData.h);
-                    btnX = btn.x + btn.width + 20;
                 }
             }
 
@@ -360,32 +431,60 @@ let Tarneeb = {
             let player = this.activeRoom.players.find(q => q.seatCount == nextSeat);
             isCurrentPlayer = activeRound.currentSeatPlay == player.seatCount ? ' (*)' : '';
             pBet = activeRound.playerBets[player.id];
+            if (isCurrentPlayer){
+                ctx.fillStyle = 'red';
+            }
             ctx.fillText("Player '" + player.name + "' (" + player.seatCount + ")" + isCurrentPlayer +
                 " (" + (!pBet ? 'No bet' : pBet) + ")",
                 30, (this.gameLoop.canvasHeight/2)+50);
+            if (isCurrentPlayer){
+                ctx.fillStyle = prevFill;
+            }
             ctx.setTransform(1, 0, 0, 1, 0, 0);
             // top player
             nextSeat = (nextSeat == 3) ? 0 : nextSeat+1;
             player = this.activeRoom.players.find(q => q.seatCount == nextSeat);
             pBet = activeRound.playerBets[player.id];
             isCurrentPlayer = activeRound.currentSeatPlay == player.seatCount ? ' (*)' : '';
+            if (isCurrentPlayer){
+                ctx.fillStyle = 'red';
+            }
             ctx.fillText("Player '" + player.name + "' (" + player.seatCount + ")" + isCurrentPlayer +
                 " (" + (!pBet ? 'No bet' : pBet) + ")",
                 this.gameLoop.canvasWidth/2, 30);
+            if (isCurrentPlayer){
+                ctx.fillStyle = prevFill;
+            }
             // right player
             nextSeat = (nextSeat == 3) ? 0 : nextSeat+1;
             player = this.activeRoom.players.find(q => q.seatCount == nextSeat);
             pBet = activeRound.playerBets[player.id];
             x = this.gameLoop.canvasWidth - 30;
-            y = (this.gameLoop.canvasHeight/2)- 50;
+            y = (this.gameLoop.canvasHeight/2)- 100;
             ctx.translate(x,y);
             ctx.rotate(90*Math.PI/180);
             ctx.translate(-x,-y);
             isCurrentPlayer = activeRound.currentSeatPlay == player.seatCount ? ' (*)' : '';
+            if (isCurrentPlayer){
+                ctx.fillStyle = 'red';
+            }
             ctx.fillText("Player '" + player.name + "' (" + player.seatCount + ")" + isCurrentPlayer+
                 " (" + (!pBet ? 'No bet' : pBet) + ")",
-                this.gameLoop.canvasWidth - 30, (this.gameLoop.canvasHeight/2)-50);
+                x, y);
+            if (isCurrentPlayer){
+                ctx.fillStyle = prevFill;
+            }
             ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+            if (activeRound.currentSeatPlay == myplayer.seatCount){
+                let prevFill = ctx.fillStyle;
+                let txt = "Your turn!";
+                let txtWidth = ctx.measureText(txt).width;
+                ctx.fillStyle = 'red';
+                ctx.fillText("Your turn!", this.gameLoop.canvasWidth - txtWidth - 20,
+                    this.gameLoop.canvasHeight - 20);
+                ctx.fillStyle = prevFill;
+            }
         }
         else if (this.uiState == 'roomLobby' || this.uiState == 'roomLobbyCountdown'){
             this.gameLoop.buttons = [];
