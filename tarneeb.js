@@ -52,6 +52,7 @@ let Tarneeb = {
         let resp = await this.conn.invoke("Authenticate", name);
         this.token = resp.token;
         this.myid = resp.id;
+        this.prevSeat = -1;
         if (this.token) {
             console.log("Authenticated for: " + name + " my id: " + this.myid);
         } else {
@@ -258,7 +259,6 @@ let Tarneeb = {
                     break;
                 }
             }
-
             // team scores
             let y = 80;
             let prevCtxFill = ctx.fillStyle;
@@ -300,6 +300,12 @@ let Tarneeb = {
             else{
                 document.title = "Tarneeb"
             }
+
+            if (isCurrentPlayer && this.prevSeat != activeRound.currentSeatPlay) {
+                let audio = new Audio('general_turn.mp3');
+                audio.play();
+            }
+            this.prevSeat = activeRound.currentSeatPlay;
 
             // draw my cards
             let btnX = 20;
