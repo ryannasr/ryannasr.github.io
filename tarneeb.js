@@ -1,6 +1,6 @@
 $(document).ready(function(){
     $("#btnTarneeb").click(function(){
-        let debug = true;
+        let debug = false;
 
         if (debug){
             Tarneeb.init("rayan" + Utils.rand(10));
