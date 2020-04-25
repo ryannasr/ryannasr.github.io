@@ -329,7 +329,7 @@ let Tarneeb = {
             // draw my cards
             let btnX = 20;
             let btnY = this.gameLoop.canvasHeight-120;
-            let imgTabashData = {sx:-1,sy:0,w:30,h:30};
+            let imgTabashData = {sx:-1,sy:0,w:45,h:45};
 
             if (this.mycards){
                 let cardTxt = '';
@@ -344,8 +344,8 @@ let Tarneeb = {
 
                     if (isCurrentPlayer && activeRound.statusStr == 'Playing') {
                         let btnT = this.gameLoop.addButtonToScene(ctx, "PickCardTabesh",
-                            btn.x, btn.y - 35, '', c, '12pt Times', 'transparent', 'black',
-                            'hand_wave.png', imgTabashData.sx, imgTabashData.sy, imgTabashData.w,
+                            btn.x, btn.y - 45, '', c, '12pt Times', 'transparent', 'black',
+                            'hand_wave.svg', imgTabashData.sx, imgTabashData.sy, imgTabashData.w,
                             imgTabashData.h);
                     }
                     btnX = btn.x + btn.width + 20;
@@ -357,7 +357,7 @@ let Tarneeb = {
                     (this.gameLoop.canvasWidth/2) + 80,
                     (this.gameLoop.canvasHeight)-280, '',
                     null,'12pt Times', 'white', 'black',
-                    'hand_wave.png', imgTabashData.sx, imgTabashData.sy,imgTabashData.w,
+                    'hand_wave.svg', imgTabashData.sx, imgTabashData.sy,imgTabashData.w,
                     imgTabashData.h);
             }
 
@@ -478,7 +478,7 @@ let Tarneeb = {
                     x + 50,
                     y-100, '',
                     null,'12pt Times', 'white', 'black',
-                    'hand_wave.png', imgTabashData.sx, imgTabashData.sy,imgTabashData.w,
+                    'hand_wave.svg', imgTabashData.sx, imgTabashData.sy,imgTabashData.w,
                     imgTabashData.h);
             }
 
@@ -500,10 +500,10 @@ let Tarneeb = {
             // check tabsha
             if (this.playersTabesh[player.id] && this.playersTabesh[player.id].active){
                 this.gameLoop.addButtonToScene(ctx, 'Tabash',
-                    (this.gameLoop.canvasWidth/2)-40,
+                    (this.gameLoop.canvasWidth/2)-50,
                     130, '',
                     null,'12pt Times', 'white', 'black',
-                    'hand_wave.png', imgTabashData.sx, imgTabashData.sy,imgTabashData.w,
+                    'hand_wave.svg', imgTabashData.sx, imgTabashData.sy,imgTabashData.w,
                     imgTabashData.h);
             }
             pBet = activeRound.playerBets[player.id];
@@ -528,7 +528,7 @@ let Tarneeb = {
                     x-50,
                     y+50, '',
                     null,'12pt Times', 'white', 'black',
-                    'hand_wave.png', imgTabashData.sx, imgTabashData.sy,imgTabashData.w,
+                    'hand_wave.svg', imgTabashData.sx, imgTabashData.sy,imgTabashData.w,
                     imgTabashData.h);
             }
             pBet = activeRound.playerBets[player.id];
