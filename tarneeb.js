@@ -53,6 +53,7 @@ let Tarneeb = {
         this.token = resp.token;
         this.myid = resp.id;
         this.prevSeat = -1;
+        this.playersTabesh = {};
         if (this.token) {
             console.log("Authenticated for: " + name + " my id: " + this.myid);
         } else {
@@ -65,7 +66,13 @@ let Tarneeb = {
         this.conn.on('PlayerDisconnected', (r) => this.onPlayerDisconnected(r));
         this.conn.on('RoomStateChange', (r) => this.onRoomStateChanged(r));
         this.conn.on('CardsUpdated', (c) => this.onCardsUpdated(c));
+        this.conn.on('PlayerTabash', (r,p) => this.onPlayerTabash(r, p));
         this.gameLoop.run();
+    },
+
+    onPlayerTabash(room, playerId){
+        console.log("Got a tabsha by: " + playerId);
+        this.playersTabesh[playerId] = {active:true, dur: 0};
     },
 
     onCardsUpdated: function(cards){
@@ -132,6 +139,7 @@ let Tarneeb = {
                 this.lobbyCountdownTimer = 0;
                 this.lobbyRdyCountdown--;
             }
+            this.playersTabesh = {};
         }
         else if (this.uiState == 'inGame'){
             if (this.activeRoom.state != 'InGame'){
@@ -174,7 +182,11 @@ let Tarneeb = {
             }
             else if (b.id == 'PickCard'){
                 console.log("Picked card: " + b.tag.suit + ' of ' + b.tag.rank);
-                await this.conn.invoke("PlayCard", this.token, this.activeRoom.id, this.myid, b.tag.rankE, b.tag.suitE);
+                await this.conn.invoke("PlayCard", this.token, this.activeRoom.id, this.myid, b.tag.rankE, b.tag.suitE, false);
+            }
+            else if (b.id == 'PickCardTabesh'){
+                console.log("Picked card with tabesh: " + b.tag.suit + ' of ' + b.tag.rank);
+                await this.conn.invoke("PlayCard", this.token, this.activeRoom.id, this.myid, b.tag.rankE, b.tag.suitE, true);
             }
             else if (b.id == 'BtnAddAI'){
                 console.log("Adding AI to room: " + b.tag);
@@ -183,6 +195,13 @@ let Tarneeb = {
             else if (b.id == 'ResetRoom'){
                 console.log("Resetting room: " + b.tag);
                 await this.conn.invoke("ResetRoom", this.token, b.tag);
+            }
+        }
+        for (let prop in this.playersTabesh){
+            if (!this.playersTabesh[prop].active) continue;
+            this.playersTabesh[prop].dur += deltaMs;
+            if (this.playersTabesh[prop].dur >= 1500){
+                this.playersTabesh[prop].active = false;
             }
         }
     },
@@ -310,6 +329,8 @@ let Tarneeb = {
             // draw my cards
             let btnX = 20;
             let btnY = this.gameLoop.canvasHeight-120;
+            let imgTabashData = {sx:-1,sy:0,w:30,h:30};
+
             if (this.mycards){
                 let cardTxt = '';
                 for (let i = 0; i < this.mycards.length; i++){
@@ -320,8 +341,24 @@ let Tarneeb = {
                     let btn = this.gameLoop.addButtonToScene(ctx, "PickCard", btnX,
                         btnY,btnTxt, c, '12pt Times', 'lightgray', 'black',
                         'cards.png', imgData.sx, imgData.sy, imgData.w, imgData.h);
+
+                    if (isCurrentPlayer && activeRound.statusStr == 'Playing') {
+                        let btnT = this.gameLoop.addButtonToScene(ctx, "PickCardTabesh",
+                            btn.x, btn.y - 35, '', c, '12pt Times', 'transparent', 'black',
+                            'hand_wave.png', imgTabashData.sx, imgTabashData.sy, imgTabashData.w,
+                            imgTabashData.h);
+                    }
                     btnX = btn.x + btn.width + 20;
                 }
+            }
+
+            if (this.playersTabesh[myplayer.id] && this.playersTabesh[myplayer.id].active){
+                this.gameLoop.addButtonToScene(ctx, 'Tabash',
+                    (this.gameLoop.canvasWidth/2) + 80,
+                    (this.gameLoop.canvasHeight)-280, '',
+                    null,'12pt Times', 'white', 'black',
+                    'hand_wave.png', imgTabashData.sx, imgTabashData.sy,imgTabashData.w,
+                    imgTabashData.h);
             }
 
             // draw table cards
@@ -435,6 +472,16 @@ let Tarneeb = {
             ctx.rotate(-90*Math.PI/180);
             ctx.translate(-x,-y);
             let player = this.activeRoom.players.find(q => q.seatCount == nextSeat);
+            // check tabsha
+            if (this.playersTabesh[player.id] && this.playersTabesh[player.id].active){
+                this.gameLoop.addButtonToScene(ctx, 'Tabash',
+                    x + 50,
+                    y-100, '',
+                    null,'12pt Times', 'white', 'black',
+                    'hand_wave.png', imgTabashData.sx, imgTabashData.sy,imgTabashData.w,
+                    imgTabashData.h);
+            }
+
             isCurrentPlayer = activeRound.currentSeatPlay == player.seatCount ? ' (*)' : '';
             pBet = activeRound.playerBets[player.id];
             if (isCurrentPlayer){
@@ -450,6 +497,15 @@ let Tarneeb = {
             // top player
             nextSeat = (nextSeat == 3) ? 0 : nextSeat+1;
             player = this.activeRoom.players.find(q => q.seatCount == nextSeat);
+            // check tabsha
+            if (this.playersTabesh[player.id] && this.playersTabesh[player.id].active){
+                this.gameLoop.addButtonToScene(ctx, 'Tabash',
+                    (this.gameLoop.canvasWidth/2)-40,
+                    130, '',
+                    null,'12pt Times', 'white', 'black',
+                    'hand_wave.png', imgTabashData.sx, imgTabashData.sy,imgTabashData.w,
+                    imgTabashData.h);
+            }
             pBet = activeRound.playerBets[player.id];
             isCurrentPlayer = activeRound.currentSeatPlay == player.seatCount ? ' (*)' : '';
             if (isCurrentPlayer){
@@ -464,9 +520,18 @@ let Tarneeb = {
             // right player
             nextSeat = (nextSeat == 3) ? 0 : nextSeat+1;
             player = this.activeRoom.players.find(q => q.seatCount == nextSeat);
-            pBet = activeRound.playerBets[player.id];
             x = this.gameLoop.canvasWidth - 30;
             y = (this.gameLoop.canvasHeight/2)- 100;
+            // check tabsha
+            if (this.playersTabesh[player.id] && this.playersTabesh[player.id].active){
+                this.gameLoop.addButtonToScene(ctx, 'Tabash',
+                    x-50,
+                    y+50, '',
+                    null,'12pt Times', 'white', 'black',
+                    'hand_wave.png', imgTabashData.sx, imgTabashData.sy,imgTabashData.w,
+                    imgTabashData.h);
+            }
+            pBet = activeRound.playerBets[player.id];
             ctx.translate(x,y);
             ctx.rotate(90*Math.PI/180);
             ctx.translate(-x,-y);

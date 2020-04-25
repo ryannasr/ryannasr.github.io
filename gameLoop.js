@@ -175,19 +175,27 @@ let GameLoop = class {
                 this.imgs[image.src+""] = image;
             };
             if (this.imgs[image.src]) {
-                CTX.drawImage(this.imgs[image.src], btn.imgSX, btn.imgSY, btn.imgSW, btn.imgSH,
-                    btn.x, btn.y, btn.imgSW, btn.imgSH);
+                if (btn.imgSX >= 0) {
+                    CTX.drawImage(this.imgs[image.src], btn.imgSX, btn.imgSY, btn.imgSW, btn.imgSH,
+                        btn.x, btn.y, btn.imgSW, btn.imgSH);
+                }
+                else{
+                    CTX.drawImage(this.imgs[image.src], btn.x, btn.y, btn.imgSW, btn.imgSH);
+                }
             } else {
                 CTX.drawImage(image, btn.x, btn.y, btn.width, btn.height);
             }
             CTX.globalAlpha = 0.2;
         }
 
-        CTX.fillStyle = btn.bg;
-        CTX.fillRect(btn.x,btn.y,txtWidth.width + 2*btnPadding, height + 2*btnPadding);
-        CTX.fillStyle = btn.fg;
-        CTX.font = btn.font;
-        CTX.fillText(btn.txt,btn.x+btnPadding,btn.y + height);
+        if (btn.txt) {
+            CTX.fillStyle = btn.bg;
+            CTX.fillRect(btn.x, btn.y, txtWidth.width + 2 * btnPadding, height + 2 * btnPadding);
+            CTX.fillStyle = btn.fg;
+            CTX.font = btn.font;
+            CTX.fillText(btn.txt, btn.x + btnPadding, btn.y + height);
+        }
+
         CTX.fillStyle = prevFill;
         CTX.globalAlpha = 1.0;
     };
